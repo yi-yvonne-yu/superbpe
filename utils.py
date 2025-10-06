@@ -13,6 +13,9 @@ from tokenizers import Tokenizer, pre_tokenizers, Regex
 from tokenizers.pre_tokenizers import ByteLevel, Split, Digits
 from tokenizers.trainers import BpeTrainer, UnigramTrainer
 
+from pathlib import Path
+from typing import List, Tuple, Optional
+from datasets import load_dataset
 
 def ensure_dir(d):
     if not os.path.exists(d):
@@ -196,3 +199,54 @@ def get_files_with_num_bytes(data_dir, num_bytes=None, loop_around=True):
             if not loop_around and counter >= len(all_files):
                 break
     return file_list, byte_count
+
+def get_files_with_num_bytes_hf(
+    dataset_name: str = "allenai/tulu-3-sft-olmo-2-mixture-0225",
+    split: str = "train",
+    out_dir: Optional[str] = "files",
+    max_bytes_per_file: int = 900 * 1024 * 1024,  # ~900 MB
+) -> Tuple[List[str], int]:
+    """
+    Sample assistant role texts from a Hugging Face dataset and write them into
+    ~900MB-sized text files.
+    """
+    ds = load_dataset(dataset_name, split=split)
+
+    # Collect all assistant role messages
+    assistant_texts = []
+    for ex in ds:
+        for msg in ex.get("messages", []):
+            if msg.get("role") == "assistant" and isinstance(msg.get("content"), str):
+                assistant_texts.append(msg["content"])
+            # assistant_texts.append(msg["content"])
+
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    file_list = []
+    total_bytes = 0
+    file_index = 0
+    current_size = 0
+    f = None
+
+    for text in assistant_texts:
+        encoded = (text or "").encode("utf-8") + b"\n"
+
+        # if no file open or adding would exceed 900MB → start a new file
+        if f is None or current_size + len(encoded) > max_bytes_per_file:
+            if f is not None:
+                f.close()
+            fpath = out_path / f"part_{file_index:04d}.txt"
+            f = open(fpath, "wb")
+            file_list.append(str(fpath))
+            file_index += 1
+            current_size = 0
+
+        f.write(encoded)
+        current_size += len(encoded)
+        total_bytes += len(encoded)
+
+    if f is not None:
+        f.close()
+
+    return file_list, total_bytes

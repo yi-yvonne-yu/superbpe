@@ -14,6 +14,7 @@ from utils import (
     get_files_with_num_bytes,
     get_truncated_file,
     train_or_extend_tokenizer,
+    get_files_with_num_bytes_hf,
 )
 
 random.seed(0)
@@ -77,7 +78,12 @@ def main(
                 file = re.sub(r"_truncated_\d+", "", file)
                 get_truncated_file(file, wanted_filesize)
     else:
-        train_files, actual_num_bytes = get_files_with_num_bytes(corpus_dir, num_bytes)
+        # train_files, actual_num_bytes = get_files_with_num_bytes(corpus_dir, num_bytes)
+        print("creating training files", flush=True)
+        train_files, actual_num_bytes = get_files_with_num_bytes_hf(
+            dataset_name = "allenai/tulu-3-sft-olmo-2-mixture-0225",
+            out_dir = "/fs/scratch/PAS2836/yu4063/tulu-3-sft-olmo-2-mixture-0225-subset",
+        )
 
         # Write metadata
         with open("meta.json", "w") as fo:
