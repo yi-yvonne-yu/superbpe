@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=tokenizer
-#SBATCH --output=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_10G_1M_finetune_data/superbpe_tok.log
-#SBATCH --error=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_10G_1M_finetune_data/superbpe_tok.err
+#SBATCH --output=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_10G_1M/superbpe_tok.log
+#SBATCH --error=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_10G_1M/superbpe_tok.err
 
 #SBATCH --partition=hugemem
 #SBATCH --nodes=1
@@ -16,7 +16,7 @@ conda activate superbpe
 
 orig_tokenizer_dir=/fs/ess/PAS2836/yu4063/decoder/local_model/allenai/OLMo-2-0425-1B
 vocab_size=1000000
-corpus_dir=/fs/scratch/PAS2836/yu4063/olmo-mix-1124-subset-p99/train  # a directory containing txt files for tokenizer training
+corpus_dir=/fs/scratch/PAS2836/yu4063/olmo2_p99_truncate/train  # a directory containing txt files for tokenizer training
 num_bytes=$((10**10))
 
 # convert num_bytes to something like 10G or 100M, depending on the value
@@ -41,7 +41,7 @@ else
 fi
 
 # output_dir=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_10G_1M-tulu_all
-output_dir=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_${num_bytes_str}_${vocab_size_str}_finetune_data_assistant
+output_dir=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_${num_bytes_str}_${vocab_size_str}
 mkdir $output_dir
 echo "output_dir: $output_dir"
 
