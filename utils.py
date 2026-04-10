@@ -161,10 +161,10 @@ def get_truncated_file(filepath, wanted_filesize):
     return str(truncated_filepath), wanted_filesize
 
 
-def get_files_with_num_bytes(data_dir, num_bytes=None, loop_around=True):
+def get_files_with_num_bytes(data_dir, num_bytes=None, loop_around=False):
     """Return a list of files inside data_dir that contain num_bytes worth of data."""
     file_list, byte_count = [], 0
-    data_dir = Path(data_dir)
+    data_dir = Path(data_dir).resolve()
 
     all_files = [
         f

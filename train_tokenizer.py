@@ -57,7 +57,9 @@ def main(
     vocab_size: int,
     do_whitespace_pretokenization: bool,
 ):
-    output_dir = Path(output_dir)
+    output_dir = Path(output_dir).resolve()
+    if corpus_dir:
+        corpus_dir = str(Path(corpus_dir).resolve())
     ensure_dir(output_dir)
     print(f"We are training a tokenizer for {output_dir}", flush=True)
 
@@ -78,12 +80,15 @@ def main(
                 file = re.sub(r"_truncated_\d+", "", file)
                 get_truncated_file(file, wanted_filesize)
     else:
-        train_files, actual_num_bytes = get_files_with_num_bytes(corpus_dir, num_bytes)
-        # print("creating training files", flush=True)
-        # train_files, actual_num_bytes = get_files_with_num_bytes_hf(
-        #     dataset_name = "allenai/tulu-3-sft-olmo-2-mixture-0225",
-        #     out_dir = "/fs/scratch/PAS2836/yu4063/tulu-3-sft-olmo-2-mixture-0225-subset",
-        # )
+        if corpus_dir:
+            print(f"Loading files from {corpus_dir}...", flush=True)
+            train_files, actual_num_bytes = get_files_with_num_bytes(corpus_dir, num_bytes)
+        else:
+            print("creating training files from HF (Tulu 3)...", flush=True)
+            train_files, actual_num_bytes = get_files_with_num_bytes_hf(
+                dataset_name = "allenai/tulu-3-sft-olmo-2-mixture-0225",
+                out_dir = "/fs/scratch/PAS2836/yu4063/tulu-3-sft-olmo-2-mixture-0225-subset",
+            )
 
         # Write metadata
         with open("meta.json", "w") as fo:

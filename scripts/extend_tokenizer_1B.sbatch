@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=tokenizer
-#SBATCH --output=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_10G_1M/superbpe_tok.log
-#SBATCH --error=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_10G_1M/superbpe_tok.err
+#SBATCH --output=/fs/scratch/PAS2836/yu4063/logs/superbpe/tok_%j.log
+#SBATCH --error=/fs/scratch/PAS2836/yu4063/logs/superbpe/tok_%j.err
 
 #SBATCH --partition=hugemem
 #SBATCH --nodes=1
@@ -14,9 +14,9 @@
 source /users/PAS2834/yu4063/miniconda3/etc/profile.d/conda.sh
 conda activate superbpe
 
-orig_tokenizer_dir=/fs/ess/PAS2836/yu4063/decoder/local_model/allenai/OLMo-2-0425-1B
+orig_tokenizer_dir=/fs/scratch/PAS2836/yu4063/local_model/allenai/OLMo-2-0425-1B
+# orig_tokenizer_dir=/fs/scratch/PAS2836/yu4063/local_model/allenai/OLMo-2-1124-7B
 vocab_size=1000000
-corpus_dir=/fs/scratch/PAS2836/yu4063/olmo2_p99_truncate/train  # a directory containing txt files for tokenizer training
 num_bytes=$((10**10))
 
 # convert num_bytes to something like 10G or 100M, depending on the value
@@ -40,18 +40,20 @@ else
     vocab_size_str=${vocab_size}
 fi
 
-# output_dir=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_10G_1M-tulu_all
-output_dir=/fs/ess/PAS2836/yu4063/decoder/local_model/SuperBPE_${num_bytes_str}_${vocab_size_str}
-mkdir $output_dir
+# output_dir=/fs/scratch/PAS2836/yu4063/local_model/SuperBPE_10G_1M-tulu_all
+output_model_name="OLMo-2-1B-tulu"
+output_dir=/fs/scratch/PAS2836/yu4063/local_model/SuperBPE_${output_model_name}_${num_bytes_str}_${vocab_size_str}_tokenizer
+mkdir -p $output_dir
 echo "output_dir: $output_dir"
 
-# mkdir -p $output_dir
+# Ensure origin merges are seeded
 cp $orig_tokenizer_dir/merges.txt $output_dir/merges.txt
-# cp $orig_tokenizer_dir/meta.json $output_dir/meta.json
 
+cd superbpe
+
+# Run main training using HF dataset
 python -m train_tokenizer \
     --output_dir $output_dir \
     --vocab_size $vocab_size \
     --do_whitespace_pretokenization false \
-    --corpus_dir $corpus_dir \
     --num_bytes $num_bytes 
